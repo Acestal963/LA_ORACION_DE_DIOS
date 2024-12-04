@@ -12,12 +12,12 @@ from PyQt6.QtWidgets import (
     QWidget,
     QFileDialog,
     QMessageBox,
+    QScrollArea,
 )
 from PyQt6.QtGui import QFont, QPixmap
 from PyQt6.QtCore import Qt
-from DFAUtils import DFAUtils 
+from DFAUtils import DFAUtils
 from AFD import dfa_to_regular_grammar, DFA, plot_dfa
-
 
 
 class MainWindow(QMainWindow):
@@ -65,8 +65,15 @@ class MainWindow(QMainWindow):
         self.grammar_output.setReadOnly(True)
 
         self.dfa_image_label = QLabel("DFA Diagram:")
+
+        # Add a scrollable area for the DFA image
         self.dfa_image = QLabel()
         self.dfa_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidget(self.dfa_image)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setMinimumSize(600, 400)  # Adjust as needed
 
         # Layout setup
         for widget in [
@@ -87,7 +94,7 @@ class MainWindow(QMainWindow):
             self.grammar_output_label,
             self.grammar_output,
             self.dfa_image_label,
-            self.dfa_image,
+            self.scroll_area,  # Replace self.dfa_image with self.scroll_area
         ]:
             layout.addWidget(widget)
 
@@ -130,11 +137,15 @@ class MainWindow(QMainWindow):
 
     def plot_and_display_dfa(self):
         try:
-            dfa = self.read_dfa_inputs()  # Obtenemos el objeto DFA
-            # Ahora pasamos los atributos del objeto DFA a la función plot_dfa
+            dfa = self.read_dfa_inputs()  # Get the DFA object
             output_file = "dfa_diagram"
-            plot_dfa(dfa.states, dfa.transitions, dfa.start_state, dfa.accept_states, output_file, "png")
-            self.dfa_image.setPixmap(QPixmap(f"{output_file}.png").scaled(600, 400, Qt.AspectRatioMode.KeepAspectRatio))
+            plot_dfa(dfa, output_file, "png")
+
+            # Load the image without scaling
+            self.dfa_image.setPixmap(QPixmap(f"{output_file}.png"))
+
+            # Adjust the scroll area size to fit the image dimensions dynamically
+            self.dfa_image.adjustSize()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to generate DFA diagram: {str(e)}")
 
